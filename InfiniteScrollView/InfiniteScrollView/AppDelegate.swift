@@ -2,7 +2,7 @@
 //  AppDelegate.swift
 //  InfiniteScrollView
 //
-//  Created by 浜田　智史 on 2017/04/15.
+//  Created by htomcat on 2017/04/15.
 //  Copyright © 2017年 htomcat. All rights reserved.
 //
 
@@ -15,8 +15,31 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+        // Create sapmle views
+        let view1 = UIView()
+        view1.translatesAutoresizingMaskIntoConstraints = false
+        view1.backgroundColor = .red
+
+        let view2 = UIView()
+        view2.translatesAutoresizingMaskIntoConstraints = false
+        view2.backgroundColor = .blue
+
+        let view3 = UIView()
+        view3.translatesAutoresizingMaskIntoConstraints = false
+        view3.backgroundColor = .yellow
+
+        let view4 = UIView()
+        view4.translatesAutoresizingMaskIntoConstraints = false
+        view4.backgroundColor = .white
+
+        let view5 = UIView()
+        view5.translatesAutoresizingMaskIntoConstraints = false
+        view5.backgroundColor = .black
+
+        let topVC = THTopViewController(views: [view1, view2, view3, view4, view5])
+
+        // Set views to window
         window = UIWindow(frame: UIScreen.main.bounds)
-        let topVC = THTopViewController()
         window?.rootViewController = topVC
         window?.makeKeyAndVisible()
         return true

@@ -1,8 +1,7 @@
 //
-//  THTopViewController.swift
-//  InfiniteScrollView
+//  THTopViewController.swift //  InfiniteScrollView
 //
-//  Created by 浜田　智史 on 2017/04/15.
+//  Created by htomcat on 2017/04/15.
 //  Copyright © 2017年 htomcat. All rights reserved.
 //
 
@@ -10,13 +9,28 @@ import UIKit
 
 final class THTopViewController: UIViewController {
 
-    // MARK: - Properties
-    private lazy var scollView: UIScrollView = self.createScrollView()
-    private lazy var contentsView: UIView = self.createContentsView()
-    private lazy var sampleView1: UIView = self.createSampleView()
-    private lazy var sampleView2: UIView = self.createSampleView()
-    private lazy var sampleView3: UIView = self.createSampleView()
-    private var views = [UIView]()
+    // MARK: - Type Properties
+    static let padding: CGFloat = 20
+
+    // MARK: - Instance Properties
+    fileprivate lazy var scollView: UIScrollView = self.createScrollView()
+    fileprivate lazy var contentsView: UIView = self.createContentsView()
+    fileprivate var contentsViews = [UIView]()
+    fileprivate var appearViews = [UIView]()
+    fileprivate var currentIndex: Int = 0
+    fileprivate var maxPageIndex: Int {
+        return self.contentsViews.count - 1
+    }
+    // MARK: - Initializer
+    init?(views: [UIView]) {
+        contentsViews = views
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder aDecoder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
+    
 
     // MARK: - Override
     override func viewDidLoad() {
@@ -26,17 +40,28 @@ final class THTopViewController: UIViewController {
         scollView.addSubview(contentsView)
         
         // Set Element to Array
-        views = [sampleView1, sampleView2, sampleView3]
-        for view in views {
+        guard let lastView = contentsViews.last else {
+            return
+        }
+        let firstView: UIView = contentsViews[0]
+        let secondView: UIView = contentsViews[1]
+        appearViews = [lastView, firstView, secondView]
+        for view in appearViews {
             contentsView.addSubview(view)
         }
     }
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
+        scollView.removeConstraints(scollView.constraints)
+        contentsView.removeConstraints(contentsView.constraints)
         
         layoutScrollView()
         layoutContentsView()
         layoutSampleViews()
+    }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        scollView.contentOffset.x = UIScreen.main.bounds.width + type(of: self).padding
     }
 
     // MARK: - Instance Methods
@@ -55,7 +80,7 @@ final class THTopViewController: UIViewController {
         
         let horizontal = NSLayoutConstraint.constraints(withVisualFormat: "H:|-0-[scrollView]-padding-|",
                                                         options: [],
-                                                        metrics: ["padding": -20],
+                                                        metrics: ["padding": -type(of: self).padding],
                                                         views: views)
         let vertical = NSLayoutConstraint.constraints(withVisualFormat: "V:|-[topLayoutGuide]-0-[scrollView]-0-[bottomLayoutGuide]-|", options: [],
                                                       metrics: nil,
@@ -84,7 +109,7 @@ final class THTopViewController: UIViewController {
                                        toItem: view,
                                        attribute: .height,
                                        multiplier: 1.0,
-                                       constant: -20.0)
+                                       constant: -type(of: self).padding)
         view.addConstraint(height)
         scollView.addConstraints(horizontal)
         scollView.addConstraints(vertical)
@@ -97,27 +122,58 @@ final class THTopViewController: UIViewController {
     }
     private func layoutSampleViews() {
         var tmpViewsArray = [String: UIView]()
-        for (index, view) in views.enumerated() {
+        var visualFormat = "H:|-0-"
+        for (index, view) in appearViews.enumerated() {
             let vertical = NSLayoutConstraint.constraints(withVisualFormat: "V:|-0-[view]-0-|",
                                                           options: [],
                                                           metrics: nil,
                                                           views: ["view": view])
             contentsView.addConstraints(vertical)
             tmpViewsArray["view\(index)"] = view
+            visualFormat += "[view\(index)(width)]-padding-"
         }
+        visualFormat += "|"
         
-        let horizontal = NSLayoutConstraint.constraints(withVisualFormat: "H:|-0-[view0(width)]-padding-[view1(width)]-padding-[view2(width)]-padding-|",
+        //let horizontal = NSLayoutConstraint.constraints(withVisualFormat: "H:|-0-[view0(width)]-padding-[view1(width)]-padding-[view2(width)]-padding-|",
+        let horizontal = NSLayoutConstraint.constraints(withVisualFormat: visualFormat,
                                                         options: [],
                                                         metrics: ["width": UIScreen.main.bounds.width,
-                                                                  "padding": 20],
+                                                                  "padding": type(of: self).padding],
                                                         views: tmpViewsArray)
         contentsView.addConstraints(horizontal)
     }
 }
 extension THTopViewController: UIScrollViewDelegate {
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        //if scrollView.contentOffset.x > UIScreen.main.bounds.width / 2{
-        //    scrollView.setContentOffset(CGPoint(x: UIScreen.main.bounds.width + 20, y: 0), animated: false)
-        //}
+        if scrollView.contentOffset.x == (UIScreen.main.bounds.width + type(of: self).padding) * 2 {
+            currentIndex += 1
+            if currentIndex > maxPageIndex {
+                currentIndex = 0
+            }
+        } else if scrollView.contentOffset.x == 0 {
+            currentIndex -= 1
+            if currentIndex < 0 {
+                currentIndex = maxPageIndex
+            }
+        } else {
+            return
+        }
+        if currentIndex == maxPageIndex {
+            appearViews = [contentsViews[currentIndex-1], contentsViews[currentIndex], contentsViews[0]]
+        } else if currentIndex == 0 {
+            appearViews = [contentsViews[maxPageIndex], contentsViews[currentIndex], contentsViews[currentIndex+1]]
+        } else {
+            appearViews = [contentsViews[currentIndex-1], contentsViews[currentIndex], contentsViews[currentIndex+1]]
+        }
+        
+        contentsView.subviews.forEach({ subview in
+            subview.removeFromSuperview()
+        })
+        appearViews.forEach({ view in
+            self.contentsView.addSubview(view)
+        })
+        view.setNeedsLayout()
+        view.layoutIfNeeded()
+        scollView.contentOffset.x = UIScreen.main.bounds.width + type(of: self).padding
     }
 }

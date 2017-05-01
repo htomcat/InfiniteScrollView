@@ -2,7 +2,7 @@
 //  InfiniteScrollViewTests.swift
 //  InfiniteScrollViewTests
 //
-//  Created by 浜田　智史 on 2017/04/15.
+//  Created by htomcat on 2017/04/15.
 //  Copyright © 2017年 htomcat. All rights reserved.
 //
 
